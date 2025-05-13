@@ -1,8 +1,8 @@
-'use client';  // Mark this as a client component
+'use client'; 
 
 import { useRouter } from 'next/navigation';
-import { useAppDispatch } from '../../store/store';  
-import { setUser } from '../../store/userslice'; 
+import { useAppDispatch } from '../../store/store';
+import { setUser } from '../../store/userslice';
 import { useState } from 'react';
 import Cookies from 'js-cookie';
 import { z } from 'zod';
@@ -15,9 +15,11 @@ const LoginSchema = z.object({
 
 // Define the API response type (example)
 interface ApiResponse {
-	name: string;
-	email: string;
-	token: string;
+	user: {
+		name: string;
+		email: string;
+	};
+	accessToken: string;
 }
 
 export default function LoginPage() {
@@ -34,11 +36,9 @@ export default function LoginPage() {
 
 		// If validation fails, collect errors and return early
 		if (!result.success) {
-			// Define fieldErrors with explicit types
 			const fieldErrors: Record<'email' | 'password', string | undefined> = { email: undefined, password: undefined };
 
 			result.error.errors.forEach((err) => {
-				// Assign the error message to the corresponding field
 				fieldErrors[err.path[0] as 'email' | 'password'] = err.message;
 			});
 
@@ -46,10 +46,10 @@ export default function LoginPage() {
 			return;
 		}
 
-		setErrors({}); // Clear previous errors
+		setErrors({}); // Clear errors
 
 		try {
-			const res = await fetch('https://inbites-api.wmlit.com/api/auth/login/',{
+			const res = await fetch('https://inbites-api.wmlit.com/api/auth/login/', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ email, password }),
@@ -59,13 +59,10 @@ export default function LoginPage() {
 
 			if (res.ok) {
 				const responseData: ApiResponse = data;
-
-				Cookies.set('token', responseData.token);
-
-				dispatch(setUser(
-					responseData.user
-				));
+				console.log(responseData, 'res', responseData.accessToken);
 				
+				Cookies.set('token', responseData.accessToken, {expires: 7});
+				dispatch(setUser(responseData.user));
 				router.push('/dashboard');
 			} else {
 				const errorMessage = data?.message || 'Login failed';
