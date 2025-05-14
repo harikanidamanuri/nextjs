@@ -37,8 +37,6 @@ export const getTags = async (
 		const response = await axiosInstance.get('/', {
 			params: {
 				search: searchQuery,
-				page,
-				pageSize,
 			},
 		});
 
@@ -50,7 +48,7 @@ export const getTags = async (
 
 		return {
 			tags: foundArray || [],
-			total: res.total || foundArray?.length || 0,
+			total: res.count,
 			page: res.page || page,
 			pageSize: res.pageSize || pageSize,
 		};

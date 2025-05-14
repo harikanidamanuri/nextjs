@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, LayoutDashboard, Users, MessageCircle, Grid, Clipboard, Calendar,  Settings, SettingsIcon } from 'lucide-react';
 import Link from 'next/link';
 
 const DashboardLayout = () => {
@@ -13,15 +13,30 @@ const DashboardLayout = () => {
 			<div className="w-64 bg-white border-r p-8">
 				<div className="text-black">
 					<ul className="mb-4">
-						<li className="mb-4">Dashboard</li>
-						<li className="mb-4">Staff</li>
-						<li className="mb-4">Staff Groups</li>
-						<li className="mb-4">Conversations</li>
-						<li className="mb-4">Templates</li>
-						<li className="mb-4">Broadcast</li>
-						<li className="mb-4">Workflows</li>
-						<li className="mb-4">Quiz</li>
-						<li className="mb-4">Contents</li>
+						<li className="mb-4 flex items-center gap-2">
+							<LayoutDashboard size={20} />
+							Dashboard
+						</li>
+						<li className="mb-4 flex items-center gap-2">
+							<Users size={20} />
+							Staff
+						</li>
+						<li className="mb-4 flex items-center gap-2">
+							<MessageCircle size={20} />
+							Conversations
+						</li>
+						<li className="mb-4 flex items-center gap-2">
+							<Grid size={20} />
+							Workflows
+						</li>
+						<li className="mb-4 flex items-center gap-2">
+							<SettingsIcon size={20} />
+							Quiz
+						</li>
+						<li className="mb-4 flex items-center gap-2">
+							<Clipboard size={20} />
+							Contents
+						</li>
 					</ul>
 				</div>
 
@@ -31,18 +46,36 @@ const DashboardLayout = () => {
 						onClick={() => setIsSettingsOpen(!isSettingsOpen)}
 						className="flex items-center justify-between w-full text-left text-white bg-indigo-500 px-4 py-2 rounded hover:bg-white hover:text-black"
 					>
-						<span className="flex items-center gap-2">Settings</span>
+						<span className="flex items-center gap-2">
+							<Settings size={16} />
+							Settings
+						</span>
 						{isSettingsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
 					</button>
 
 					{isSettingsOpen && (
 						<div className="ml-4 mt-2 space-y-2 text-gray-800">
-							<div className="cursor-pointer">Settings</div>
-							<div className="cursor-pointer">Roles</div>
-							<div className="cursor-pointer">Languages</div>
-							<div className="cursor-pointer">Users</div>
+							<div className="cursor-pointer flex items-center gap-2">
+								<Settings size={16} />
+								Settings
+							</div>
+							<div className="cursor-pointer flex items-center gap-2">
+								<Users size={16} />
+								Roles
+							</div>
+							<div className="cursor-pointer flex items-center gap-2">
+								<Calendar size={16} />
+								Languages
+							</div>
+							<div className="cursor-pointer flex items-center gap-2">
+								<Users size={16} />
+								Users
+							</div>
 							<Link href='/tags'>
-								<div className="cursor-pointer">Tags</div>
+								<div className="cursor-pointer flex items-center gap-2">
+									<Clipboard size={16} />
+									Tags
+								</div>
 							</Link>
 						</div>
 					)}

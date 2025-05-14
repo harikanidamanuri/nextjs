@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FaTimes } from 'react-icons/fa';
 import { Pencil, Trash2, ArrowUpDown, Search, Plus } from 'lucide-react';
 import { getTags, addTag, editTag, deleteTag } from '../api';
@@ -11,39 +12,57 @@ type Tag = {
 };
 
 export default function TagsTable() {
+	const router = useRouter();
+	const searchParams = useSearchParams();
+
+	const pageParam = parseInt(searchParams.get('page') || '1', 25);  // Page from URL
+	const searchParam = searchParams.get('search') || ''; // Search query from URL
+
 	const [tags, setTags] = useState<Tag[]>([]);
-	const [searchQuery, setSearchQuery] = useState('');
+	const [searchQuery, setSearchQuery] = useState(searchParam); // Search query state
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
 	const [editText, setEditText] = useState('');
 	const [showAddForm, setShowAddForm] = useState(false);
 	const [newTagName, setNewTagName] = useState('');
 	const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
 
 	// Pagination
-	const [currentPage, setCurrentPage] = useState(1);
+	const [currentPage, setCurrentPageState] = useState(pageParam);
 	const itemsPerPage = 25;
 	const [totalItems, setTotalItems] = useState(0);
 	const totalPages = Math.ceil(totalItems / itemsPerPage);
 
+	const setCurrentPage = (page: number) => {
+		setCurrentPageState(page);
+		const params = new URLSearchParams(searchParams.toString());
+		params.set('page', page.toString());
+		router.push(`?${params.toString()}`);
+	};
+
+	const updateSearchQuery = (query: string) => {
+		setSearchQuery(query);
+		const params = new URLSearchParams(searchParams.toString());
+		params.set('search', query);
+		router.push(`?${params.toString()}`);
+	};
+
 	const fetchTags = async () => {
-		setLoading(true);
-		setError(null);
 		try {
-			const result = await getTags(searchQuery, currentPage, itemsPerPage);
+			const result = await getTags(searchQuery, currentPage);
 			setTags(result.tags || []);
 			setTotalItems(result.total || 0);
 		} catch (err) {
 			console.error('❌ Failed to fetch tags:', err);
-			setError('Failed to fetch tags');
-		} finally {
-			setLoading(false);
 		}
 	};
 
 	useEffect(() => {
-		fetchTags();
+		setCurrentPageState(pageParam); // Sync page state with URL
+		setSearchQuery(searchParam); // Sync search query with URL
+	}, [pageParam, searchParam]);
+
+	useEffect(() => {
+		fetchTags(); // Fetch tags when search query or page changes
 	}, [searchQuery, currentPage]);
 
 	const handleAddTag = async () => {
@@ -54,7 +73,6 @@ export default function TagsTable() {
 			await addTag(trimmed);
 			setNewTagName('');
 			setShowAddForm(false);
-			setCurrentPage(1);
 			fetchTags();
 		} catch (error) {
 			console.error('Failed to add tag:', error);
@@ -89,7 +107,7 @@ export default function TagsTable() {
 
 	return (
 		<div className="min-h-screen bg-white p-6">
-			<div className="space-y-4 p-4 bg-white w-full mx-auto shadow rounded-2xl">
+			<div className="space-y-4 p-4 bg-white mx-auto shadow rounded-2xl">
 				{/* Top Bar */}
 				<div className="flex items-center justify-between flex-wrap gap-4">
 					<h2 className="text-black font-semibold text-3xl">
@@ -103,17 +121,14 @@ export default function TagsTable() {
 								placeholder="Search"
 								className="py-2 w-full outline-none text-black bg-transparent"
 								value={searchQuery}
-								onChange={e => {
-									setSearchQuery(e.target.value);
-									setCurrentPage(1);
-								}}
+								onChange={e => updateSearchQuery(e.target.value)} // Update search query and reset to page 1
 							/>
 						</div>
 						<button
 							onClick={() => setShowAddForm(true)}
-							className="px-3 py-2 rounded-xl flex items-center gap-1 bg-violet-500 text-white h-8"
+							className="px-2 py-1 rounded-xl flex items-center gap-1 bg-violet-500 text-white h-8"
 						>
-							<Plus /> Add Tag
+							<Plus className='h-4' /> Add Tag
 						</button>
 					</div>
 				</div>
@@ -125,7 +140,7 @@ export default function TagsTable() {
 					</div>
 				) : (
 					<>
-						<div className="flex justify-between items-center font-medium text-sm bg-violet-100 rounded h-8">
+						<div className="flex justify-between items-center font-medium text-sm bg-violet-100 rounded h-8 px-2">
 							<div className="flex items-center text-gray-500">
 								Name
 								<ArrowUpDown className="ml-2 h-4 w-4 text-gray-500" />
@@ -135,7 +150,7 @@ export default function TagsTable() {
 						{tags.map((tag, index) => (
 							<div
 								key={tag.id}
-								className="flex justify-between items-center border-b py-2 text-sm hover:bg-gray-100"
+								className="flex justify-between items-center border-b py-2 text-sm hover:bg-gray-100 px-2"
 							>
 								{editingIndex === index ? (
 									<div className="flex gap-2 w-full">
@@ -174,23 +189,11 @@ export default function TagsTable() {
 								</div>
 							</div>
 						))}
-
-						{/* Next Page button inside the list */}
-						{currentPage < totalPages && (
-							<div className="flex justify-center py-4">
-								<button
-									onClick={() => setCurrentPage(currentPage + 1)}
-									className="bg-violet-500 text-white px-4 py-2 rounded hover:bg-violet-600"
-								>
-									Load Page {currentPage + 1}
-								</button>
-							</div>
-						)}
 					</>
 				)}
 			</div>
 
-			{/* Pagination info at the bottom */}
+			{/* Pagination */}
 			{totalItems > 0 && (
 				<div className="flex justify-end mt-4 w-full">
 					<div className="flex items-center gap-4">
@@ -204,24 +207,7 @@ export default function TagsTable() {
 								return (
 									<button
 										key={page}
-										onClick={() => setCurrentPage(page)}
-										className={`px-3 py-1 rounded ${currentPage === page
-												? 'bg-violet-500 text-white'
-												: 'text-black hover:bg-gray-100'
-											}`}
-									>
-										{page}
-									</button>
-								);
-							})}
-						</div>
-						<div className="flex gap-2 flex-wrap">
-							{Array.from({ length: totalPages }, (_, i) => {
-								const page = i + 2;
-								return (
-									<button
-										key={page}
-										onClick={() => setCurrentPage(page)}
+										onClick={() => setCurrentPage(page)} // Update page and URL
 										className={`px-3 py-1 rounded ${currentPage === page
 											? 'bg-violet-500 text-white'
 											: 'text-black hover:bg-gray-100'
@@ -236,6 +222,7 @@ export default function TagsTable() {
 				</div>
 			)}
 
+			{/* Add and Delete Modals */}
 			{/* Add Modal */}
 			{showAddForm && (
 				<div className="fixed inset-0 flex w-screen items-center justify-center p-4">
@@ -275,8 +262,8 @@ export default function TagsTable() {
 								onClick={handleAddTag}
 								disabled={!newTagName.trim()}
 								className={`px-4 py-2 rounded text-white ${newTagName.trim()
-										? 'bg-blue-600 hover:bg-blue-700'
-										: 'bg-blue-400 cursor-not-allowed'
+									? 'bg-blue-600 hover:bg-blue-700'
+									: 'bg-blue-400 cursor-not-allowed'
 									}`}
 							>
 								Submit

@@ -2,7 +2,7 @@ import './globals.css';
 import { Providers } from './providers'; // ✅ Import the wrapper
 
 export const metadata = {
-  title: 'Your App',
+  title: 'next pro',
   description: 'Your app description',
 };
 
